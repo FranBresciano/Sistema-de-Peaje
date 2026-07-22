@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Control del Propietario</title>
+    <link rel="stylesheet" href="peaje.css">
+    <script src="vistaWeb.js"></script>
+    <script src="sse.js"></script>
+</head>
+<body class="dashboard">
+    <script src="utilesVista.js"></script>
+    
+    <div class="header">
+        <h1>🚗 Tablero de control del propietario</h1>
+        <a class="logout-link" onclick="logout()">Salir</a>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Resumen del propietario -->
+        <div class="summary-card">
+            <h2>Resumen del propietario</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Nombre completo</div>
+                    <div class="summary-value" id="spnNombrePropietario"></div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Estado</div>
+                    <div class="summary-value" id="spnEstadoPropietario"></div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Saldo actual</div>
+                    <div class="summary-value" id="spnSaldoActual"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bonificaciones y Vehículos -->
+        <div class="two-column">
+            <!-- Bonificaciones asignadas -->
+            <div class="summary-card">
+                <h2>Bonificaciones asignadas</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bonificación</th>
+                            <th>Puesto</th>
+                            <th>Fecha asignada</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBonificaciones">
+                        
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Vehículos registrados -->
+            <div class="summary-card">
+                <h2>Vehículos registrados</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Modelo</th>
+                            <th>Color</th>
+                            <th>Tránsitos</th>
+                            <th>Monto total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaVehiculos">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tránsitos realizados -->
+        <div class="summary-card">
+            <h2>Tránsitos realizados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Puesto</th>
+                        <th>Matrícula</th>
+                        <th>Categoría</th>
+                        <th>Monto tarifa</th>
+                        <th>Bonificación</th>
+                        <th>Monto bonificación</th>
+                        <th>Monto pagado</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaTransitos">
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Notificaciones del sistema -->
+        <div class="notifications">
+            <h2>Notificaciones</h2>
+            <table>
+                <tbody id="tablaNotificaciones">
+                    
+                </tbody>
+            </table>
+            <button class="clear-btn" onclick="borrarNotificaciones()">Borrar notificaciones</button>
+        </div>
+    </div>
+
+    <script>
+        urlIniciarVista="/menuPropietario/vistaConectadaPropietario";
+        urlRegistroSSE = "/menuPropietario/registrarSSE";
+
+        const spnNombrePropietario = document.getElementById("spnNombrePropietario");
+        const spnEstadoPropietario = document.getElementById("spnEstadoPropietario");
+        const spnSaldoActual = document.getElementById("spnSaldoActual");
+
+        function borrarNotificaciones(){
+            submit("menuPropietario/borrarNotificacionesPropietario", null);
+        }
+
+        function logout() {
+            submit("acceso/logoutPropietario", null)    
+        }
+        
+        function mostrar_usuarioNoAutenticado(urlDestino){
+            window.location.href = urlDestino;
+        }
+        
+        function mostrar_nombrePropietario(nombrePropietario){
+            spnNombrePropietario.innerHTML = nombrePropietario;
+        }
+
+        function mostrar_estadoPropietario(estadoPropietario){
+            spnEstadoPropietario.innerHTML = estadoPropietario;
+        }
+
+        function mostrar_saldoActual(saldoActual){
+            spnSaldoActual.innerHTML = "$ " + saldoActual.toFixed(2);
+        }
+
+        function procesarRespuesta(respuesta) {
+            if (respuesta.tipo === "usuarioNoAutenticado") {
+                window.location.href = respuesta.valor;
+                return;
+            }
+            
+            if (respuesta.tipo === "nombrePropietario") {
+                document.getElementById("spnNombrePropietario").textContent = respuesta.valor;
+            }
+            
+            if (respuesta.tipo === "estadoPropietario") {
+                document.getElementById("spnEstadoPropietario").textContent = respuesta.valor;
+            }
+            
+            if (respuesta.tipo === "saldoActual") {
+                document.getElementById("spnSaldoActual").textContent = "$ " + respuesta.valor.toFixed(2);
+            }
+            
+            if (respuesta.tipo === "bonificaciones") {
+                mostrar_bonificaciones(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "vehiculos") {
+                mostrar_vehiculos(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "transitos") {
+                mostrar_transitos(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "notificaciones") {
+                mostrar_notificaciones(respuesta.valor);
+            }
+        }
+
+        function mostrar_bonificaciones(bonificaciones) {
+            const tbody = document.getElementById("tablaBonificaciones");
+            tbody.innerHTML = "";
+            
+            if (!bonificaciones || bonificaciones.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay bonificaciones asignadas</td></tr>';
+                return;
+            }
+            
+            bonificaciones.forEach(bonif => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = bonif.nombreBonificacion || "N/A";
+                row.insertCell(1).textContent = bonif.nombrePuesto || "N/A";
+                
+                // Formatear fecha
+                if (bonif.fechaAsignacion) {
+                    const fecha = bonif.fechaAsignacion.split('T')[0];
+                    row.insertCell(2).textContent = fecha;
+                } else {
+                    row.insertCell(2).textContent = "N/A";
+                }
+            });
+        }
+
+        function mostrar_vehiculos(vehiculos) {
+            const tbody = document.getElementById("tablaVehiculos");
+            tbody.innerHTML = "";
+            
+            if (!vehiculos || vehiculos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay vehículos registrados</td></tr>';
+                return;
+            }
+            
+            vehiculos.forEach(veh => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = veh.matricula;
+                row.insertCell(1).textContent = veh.modelo;
+                row.insertCell(2).textContent = veh.color;
+                row.insertCell(3).textContent = veh.totalTransitos;
+                row.insertCell(4).textContent = "$ " + veh.totalPagado.toFixed(2);
+            });
+        }
+
+        function mostrar_transitos(transitos) {
+            const tbody = document.getElementById("tablaTransitos");
+            tbody.innerHTML = "";
+            
+            if (!transitos || transitos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No hay tránsitos realizados</td></tr>';
+                return;
+            }
+
+            transitos.forEach(tran => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = tran.puesto || "N/A";
+                row.insertCell(1).textContent = tran.matricula || "N/A";
+                row.insertCell(2).textContent = tran.categoria || "N/A";
+                row.insertCell(3).textContent = tran.montoTarifa != null ? "$ " + tran.montoTarifa.toFixed(2) : "N/A";
+                row.insertCell(4).textContent = tran.bonificacion || "N/A";
+                row.insertCell(5).textContent = tran.montoBonificacion != null ? "$ " + tran.montoBonificacion.toFixed(2) : "N/A";
+                row.insertCell(6).textContent = tran.montoPagado != null ? "$ " + tran.montoPagado.toFixed(2) : "N/A";
+                row.insertCell(7).textContent = tran.fecha || "N/A";
+                row.insertCell(8).textContent = tran.hora ? tran.hora.substring(0, 8) : "N/A";
+            });
+        }
+
+        function mostrar_notificaciones(notificaciones) {
+            const tbody = document.getElementById("tablaNotificaciones");
+            tbody.innerHTML = "";
+            
+            if (!notificaciones || notificaciones.length === 0) {
+                tbody.innerHTML = '<tr><td style="text-align: center;">No hay notificaciones para borrar</td></tr>';
+                return;
+            }
+            
+            notificaciones.forEach(not => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = not.notificacion;
+            });
+        }
+    </script>
+</body>
+</html>

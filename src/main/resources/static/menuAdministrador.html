@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Administrador</title>
+    <link rel="stylesheet" href="Peaje.css">
+    <script src="vistaWeb.js"></script>
+</head>
+<body>
+    <script src="utilesVista.js"></script>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-title">Sistema de Peajes - Panel Administrador</div>
+            <div class="navbar-buttons">
+                <button class="nav-btn active" data-vista="emular">Emular Tránsito</button>
+                <button class="nav-btn" data-vista="bonificaciones">Bonificaciones</button>
+                <button class="nav-btn" data-vista="estado">Estado</button>
+                <button class="nav-btn" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div id="vistaEmular" class="vista active">
+            <div class="container">
+                <h2>Emular Tránsito de Vehículo</h2>
+                
+                <div class="form-group">
+                    <label for="selectPuesto">Seleccionar Puesto:</label>
+                    <select id="selectPuesto">
+                        <option value="">Cargando puestos...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputMatricula">Matrícula del Vehículo:</label>
+                    <input type="text" id="inputMatricula" placeholder="Ej: ABC1234">
+                </div>
+
+                <div class="form-group">
+                    <label for="inputFecha">Fecha y Hora:</label>
+                    <input type="datetime-local" id="inputFecha">
+                </div>
+
+                <div class="form-group" style="align-items: center;">
+                    <button type="button" class="btn-primary" onclick="emularTransito()">Emular Tránsito</button>
+                </div>
+
+                <div id="listaTarifas" class="tarifas-container"></div>
+
+                <div id="resultadoEmulacion" class="resultado-container"></div>
+            </div>
+        </div>
+
+        <div id="vistaBonificaciones" class="vista">
+            <div class="bonificaciones-layout">
+                <!-- Panel Izquierdo -->
+                <div class="bonificaciones-panel-left">
+                    <h2>📋 Asignar bonificaciones</h2>
+                    
+                    <!-- Bonificaciones definidas -->
+                    <div class="form-group">
+                        <label for="selectBonificacion">Bonificaciones definidas</label>
+                        <select id="selectBonificacion">
+                            <option value="">Cargando bonificaciones...</option>
+                        </select>
+                    </div>
+
+                    <!-- Puestos definidos -->
+                    <div class="form-group">
+                        <label for="selectPuestoBonif">Puestos definidos</label>
+                        <select id="selectPuestoBonif">
+                            <option value="">Cargando puestos...</option>
+                        </select>
+                    </div>
+
+                    
+                </div>
+
+                <!-- Panel Derecho -->
+                <div class="bonificaciones-panel-right">
+                    <h3>Cédula de identidad</h3>
+                    <input type="text" id="inputCedula" placeholder="Ej:12345678" class="input-cedula">
+                    <!-- Botón Buscar -->
+                    <button class="btn-primary" onclick="buscarPropietario()">
+                        🔍 Buscar propietario
+                    </button>       
+                    <div id="infoPropietario" class="propietario-card" style="display: none;">
+                        
+                        <div class="propietario-header">
+                            <h4>Propietario</h4>
+                        </div>
+                        <div class="propietario-info">
+                            <div class="info-item">
+                                <span class="label">Nombre:</span>
+                                <span id="nombreProp" class="value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Estado:</span>
+                                <span id="estadoProp" class="value estado-activo">Activo</span>
+                            </div>
+                        </div>
+
+                        <h4 class="section-subtitle">Bonificaciones asignadas</h4>
+                        <div id="listaBonificaciones" class="bonificaciones-list">
+                            <p class="empty-message">Sin bonificaciones asignadas</p>
+                        </div>
+
+                        <button class="btn-assign" onclick="asignarBonificacion()">
+                            ➕ Asignar nueva bonificación
+                        </button>
+                        <p class="help-text">
+                            Seleccione bonificación y puesto en las listas de la izquierda y luego asigne.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="vistaEstado" class="vista">
+            <div class="estado-container">
+                <div class="estado-header">
+                    <div class="estado-icon">📋</div>
+                    <h2>Cambiar estado de propietario</h2>
+                    <p class="estado-subtitle">Ingrese la cédula, revise el estado actual y seleccione un nuevo estado (datos de ejemplo).</p>
+                </div>
+
+                <div class="estado-content">
+                    <!-- Panel Izquierdo: Búsqueda -->
+                    <div class="estado-panel">
+                        <h3>Cédula de identidad</h3>
+                        <div class="form-group">
+                            <input type="text" id="inputCedulaEstado" placeholder="12345678" class="input-cedula">
+                            <button class="btn-buscar" onclick="buscarPropietarioEstado()">Buscar</button>
+                        </div>
+
+                        <!-- Info Propietario -->
+                        <div id="infoPropietarioEstado" class="propietario-info-box">
+                            <h4>Propietario</h4>
+                            <div class="info-row">
+                                <span class="info-label">Nombre:</span>
+                                <span id="nombrePropEstado" class="info-value">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Estado actual:</span>
+                                <span id="estadoActualProp" class="info-value estado-badge">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Derecho: Cambio de Estado -->
+                    <div class="estado-panel">
+                        <h3>Estados definidos</h3>
+                        <div class="form-group">
+                            <select id="selectNuevoEstado" class="select-estado">
+                                <option value="">Cargando estados...</option>
+                            </select>
+                            <button class="btn-cambiar-estado" onclick="cambiarEstadoPropietario()">Cambiar estado</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        urlIniciarVista="/menuAdministrador/vistaConectadaAdministrador";
+        urlRegistroSSE = "/menuAdministrador/registrarSSE";
+
+        const datosRecibidos = {
+            puestos: null,
+            bonificaciones: null,
+            estados: null
+        };
+
+        function cambiarVista(vista) {
+            document.querySelectorAll('.vista').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            const vistas = {
+                'emular': 'vistaEmular',
+                'bonificaciones': 'vistaBonificaciones',
+                'estado': 'vistaEstado'
+            };
+            
+            document.getElementById(vistas[vista]).classList.add('active');
+        }
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if(this.getAttribute('onclick')) return;
+                const vista = this.getAttribute('data-vista');
+                if(vista) {
+                    this.classList.add('active');
+                    cambiarVista(vista);
+                }
+            });
+        });
+
+        function logout() {
+            submit("acceso/logoutAdministrador", null)  
+        }
+
+        function mostrar_usuarioNoAutenticado(urlDestino){
+            window.location.href = urlDestino;
+        }
+
+        function procesarRespuesta(respuesta) {
+            console.log("=== PROCESANDO RESPUESTA ===");
+            console.log("Tipo:", respuesta.tipo);
+            console.log("Valor:", respuesta.valor);
+            
+            if (respuesta.tipo === "usuarioNoAutenticado") {
+                window.location.href = respuesta.valor;
+                return;
+            }
+            
+            if (respuesta.tipo === "puestos"){
+                mostrar_puestos(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "puestosBonificaciones"){
+                mostrar_puestosBonificaciones(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "bonificaciones") {
+                datosRecibidos.bonificaciones = respuesta.valor;
+                mostrar_bonificaciones(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "resultadoEmulacion") {
+                console.log("✅ Resultado emulación:", respuesta.valor);
+                mostrar_resultadoEmulacion(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "propietarioEncontrado") {
+                console.log("✅ Propietario encontrado:", respuesta.valor);
+                mostrar_propietarioEncontrado(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "propietarioEncontradoEstado") {
+                mostrar_propietarioEnEstado(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "bonificacionAsignada") {
+                alert(respuesta.valor);
+            }
+
+            if (respuesta.tipo === "estadoCambiado") {
+                alert(respuesta.valor);
+            }
+        }
+
+        function cambiarEstadoPropietario(){
+            const ci = document.getElementById('inputCedulaEstado').value.trim();
+            const selectNuevoEstado = document.getElementById('selectNuevoEstado');
+
+            if (!ci) {
+                alert('Por favor ingrese una cédula');
+                return;
+            }
+            if (selectNuevoEstado.value === "") {
+                alert('Por favor seleccione un nuevo estado');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('ci', ci);
+            params.append('nuevoEstado', selectNuevoEstado.value);
+
+            console.log('📤 Enviando cambio de estado:', {
+                ci: ci,
+                nuevoEstado: selectNuevoEstado.value
+            });
+
+            submit("menuAdministrador/cambiarEstadoPropietario", params.toString());
+        }
+
+        function mostrar_estados(estados) {
+            console.log("🔍 === INICIO mostrar_estados ===");
+            console.log("📦 Estados recibidos:", estados);
+            
+            const select = document.getElementById('selectNuevoEstado');
+            
+            if (!select) {
+                console.error("❌ No se encontró el select de estados");
+                return;
+            }
+            
+            select.innerHTML = '<option value="">Seleccione un estado</option>';
+            
+            if (!estados || estados.length === 0) {
+                select.innerHTML = '<option value="">No hay estados disponibles</option>';
+                return;
+            }
+            
+            estados.forEach((estado, index) => {
+                console.log(`  ➕ Agregando estado ${index}:`, estado.nombre);
+                const option = document.createElement('option');
+                option.value = estado.nombre;
+                option.textContent = estado.nombre;
+                select.appendChild(option);
+            });
+            
+            console.log("✅ === FIN mostrar_estados ===");
+        }
+
+        function mostrar_propietarioEncontradoEstado(propietario) {
+            console.log("🔍 === INICIO mostrar_propietarioEncontradoEstado ===");
+            console.log("📦 Propietario recibido:", propietario);
+            
+            const infoPropietarioEstado = document.getElementById('infoPropietarioEstado');
+            const nombreProp = document.getElementById('nombrePropEstado');
+            const estadoActual = document.getElementById('estadoActualProp');
+            const selectNuevoEstado = document.getElementById('selectNuevoEstado');
+            
+            console.log("🎯 Elementos encontrados:");
+            console.log("  - infoPropietarioEstado:", infoPropietarioEstado);
+            console.log("  - nombreProp:", nombreProp);
+            console.log("  - estadoActual:", estadoActual);
+            
+            if (!infoPropietarioEstado) {
+                console.error("❌ No se encontró el elemento infoPropietarioEstado");
+                return;
+            }
+            
+            // Actualizar nombre
+            if (nombreProp) {
+                nombreProp.textContent = propietario.nombre;
+                console.log("✅ Nombre actualizado:", nombreProp.textContent);
+            }
+            
+            // Actualizar estado con badge
+            if (estadoActual) {
+                estadoActual.textContent = propietario.estado;
+                const claseEstado = 'info-value estado-badge estado-' + propietario.estado.toLowerCase();
+                estadoActual.className = claseEstado;
+                console.log("✅ Estado actualizado:", estadoActual.textContent);
+                console.log("✅ Clase aplicada:", estadoActual.className);
+            }
+            
+            // Preseleccionar el estado en el select
+            if (selectNuevoEstado) {
+                selectNuevoEstado.value = propietario.estado;
+                console.log("✅ Select actualizado:", selectNuevoEstado.value);
+            }
+            
+            // Mostrar el panel con animación
+            infoPropietarioEstado.classList.add('show');
+            
+            console.log("📦 Clases del panel:", infoPropietarioEstado.className);
+            console.log("✅ === FIN mostrar_propietarioEnEstado ===");
+        }
+
+        function asignarBonificacion(){
+            const ci = document.getElementById('inputCedula').value.trim();
+            const selectBonif = document.getElementById('selectBonificacion');
+            const selectPuesto = document.getElementById('selectPuestoBonif');
+
+            if (!ci) {
+                alert('Por favor ingrese una cédula');
+                return;
+            }
+            if (selectBonif.value === "") {
+                alert('Por favor seleccione una bonificación');
+                return;
+            }
+            if (selectPuesto.value === "") {
+                alert('Por favor seleccione un puesto');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('ci', ci);
+            params.append('nombreBonificacion', selectBonif.value);
+            params.append('nombrePuesto', selectPuesto.value);
+
+            console.log('📤 Enviando asignación:', {
+                ci: ci,
+                bonificacion: selectBonif.value,
+                puesto: selectPuesto.value
+            });
+
+            submit("menuAdministrador/asignarBonificacion", params.toString());
+        }
+
+        function buscarPropietarioEstado() {
+            const ci = document.getElementById('inputCedulaEstado').value.trim();
+
+            if (!ci) {
+                alert('Por favor ingrese una cédula');
+                return;
+            }
+            const params = new URLSearchParams();
+            params.append('ci', ci);
+            // Usar el mismo endpoint
+            submit("menuAdministrador/buscarPropietarioEstado", params.toString());
+        }
+
+        function buscarPropietario() {
+            const ci = document.getElementById('inputCedula').value.trim();
+
+            if (!ci) {
+                alert('Por favor ingrese una cédula');
+                return;
+            }
+            const params = new URLSearchParams();
+            params.append('ci', ci);
+            submit("menuAdministrador/buscarPropietario", params.toString());
+        }
+
+        function mostrar_propietarioEncontrado(propietario) {
+            console.log("🔍 Mostrando propietario:", propietario);
+            
+            const infoPropietario = document.getElementById('infoPropietario');
+            const nombreProp = document.getElementById('nombreProp');
+            const estadoProp = document.getElementById('estadoProp');
+            const listaBonificaciones = document.getElementById('listaBonificaciones');
+            
+            // Mostrar nombre
+            nombreProp.textContent = propietario.nombre;
+            
+            // Mostrar estado con clase CSS apropiada
+            estadoProp.textContent = propietario.estado;
+            estadoProp.className = 'value estado-' + propietario.estado.toLowerCase();
+            
+            // Mostrar bonificaciones
+            if (!propietario.bonificaciones || propietario.bonificaciones.length === 0) {
+                listaBonificaciones.innerHTML = '<p class="empty-message">Sin bonificaciones asignadas</p>';
+            } else {
+                listaBonificaciones.innerHTML = '';
+                propietario.bonificaciones.forEach(bonif => {
+                    const div = document.createElement('div');
+                    div.className = 'bonificacion-item';
+                    div.innerHTML = `
+                        <div class="bonif-info">
+                            <strong>🎁 ${bonif.nombreBonificacion}</strong>
+                            <span>📍 ${bonif.nombrePuesto}</span>
+                        </div>
+                    `;
+                    listaBonificaciones.appendChild(div);
+                });
+            }
+            
+            // Mostrar el panel
+            infoPropietario.style.display = 'block';
+        }
+
+        function mostrar_bonificaciones(bonificaciones) {
+            const select = document.getElementById('selectBonificacion');
+
+            if (!select) {
+                console.error("No se encontró el select de bonificaciones");
+                return;
+            }
+            
+            select.innerHTML = '<option value="">Seleccione una bonificación</option>';
+            
+            if (!bonificaciones || bonificaciones.length === 0) {
+                select.innerHTML = '<option value="">No hay bonificaciones disponibles</option>';
+                return;
+            }
+            
+            bonificaciones.forEach((bonificacion, index) => {
+                const option = document.createElement('option');
+                option.value = bonificacion.nombre;
+                option.textContent = bonificacion.nombre;
+                option.dataset.bonificacion = JSON.stringify(bonificacion);
+                select.appendChild(option);
+            });
+        }
+
+        function mostrar_puestosBonificaciones(puestos) {
+            console.log("🔍 === INICIO mostrar_puestosBonificaciones ===");
+            console.log("📦 Puestos recibidos:", puestos);
+            console.log("📦 ¿Es array?:", Array.isArray(puestos));
+            console.log("📦 Cantidad:", puestos ? puestos.length : 'NULL');
+            
+            const select = document.getElementById('selectPuestoBonif');
+            
+            console.log("🎯 Select encontrado:", select);
+            console.log("🎯 Select existe:", !!select);
+            console.log("🎯 ID del select:", select ? select.id : 'NO EXISTE');
+            console.log("🎯 HTML ANTES:", select ? select.innerHTML : 'NO EXISTE');
+            
+            if (!select) {
+                console.error("❌ NO SE ENCONTRÓ selectPuestoBonif");
+                console.log("Todos los selects en el DOM:", document.querySelectorAll('select'));
+                return;
+            }
+            
+            console.log("🧹 Limpiando select...");
+            select.innerHTML = '<option value="">Seleccione un puesto</option>';
+            console.log("🧹 HTML DESPUÉS DE LIMPIAR:", select.innerHTML);
+            
+            if (!puestos || puestos.length === 0) {
+                console.warn("⚠️ NO HAY PUESTOS");
+                select.innerHTML = '<option value="">No hay puestos disponibles</option>';
+                return;
+            }
+            
+            console.log("➕ Agregando opciones...");
+            puestos.forEach((puesto, index) => {
+                console.log(`  ➕ Agregando puesto ${index}:`, puesto.nombre);
+                const option = document.createElement('option');
+                option.value = puesto.nombre;
+                option.textContent = puesto.nombre;
+                option.dataset.puesto = JSON.stringify(puesto);
+                select.appendChild(option);
+                console.log(`  ✅ Opción agregada. Select ahora tiene ${select.options.length} opciones`);
+            });
+            
+            console.log("🎯 HTML FINAL:", select.innerHTML);
+            console.log("🎯 Cantidad final de opciones:", select.options.length);
+            console.log("🎯 Opciones:", Array.from(select.options).map(o => o.textContent));
+            console.log("✅ === FIN mostrar_puestosBonificaciones ===");
+        }
+        
+        function mostrar_puestos(puestos) {
+            console.log("🔍 === INICIO mostrar_puestos ===");
+            const select = document.getElementById('selectPuesto');
+            
+            if (!select) {
+                console.error("No se encontró el select de puestos");
+                return;
+            }
+            
+            select.innerHTML = '<option value="">Seleccione un puesto</option>';
+            
+            if (!puestos || puestos.length === 0) {
+                select.innerHTML = '<option value="">No hay puestos disponibles</option>';
+                return;
+            }
+            
+            puestos.forEach((puesto, index) => {
+                const option = document.createElement('option');
+                option.value = puesto.nombre;
+                option.textContent = puesto.nombre;
+                option.dataset.puesto = JSON.stringify(puesto);
+                select.appendChild(option);
+            });
+            console.log("✅ === FIN mostrar_puestos ===");
+        }
+
+        function obtenerPuestoSeleccionado() {
+            const select = document.getElementById('selectPuesto');
+            if (!select || select.selectedIndex <= 0) return null;
+            
+            const option = select.options[select.selectedIndex];
+            if (option && option.dataset.puesto) {
+                return JSON.parse(option.dataset.puesto);
+            }
+            return null;
+        }
+
+        function cargarTarifasPuesto(puesto) {
+            const listaTarifas = document.getElementById('listaTarifas');
+            listaTarifas.innerHTML = '';
+            
+            if (!puesto.tarifas || puesto.tarifas.length === 0) {
+                listaTarifas.innerHTML = '<p style="text-align: center; color: #666;">No hay tarifas definidas</p>';
+                return;
+            }
+            
+            const titulo = document.createElement('h3');
+            titulo.textContent = 'Tarifas - ' + puesto.nombre;
+            listaTarifas.appendChild(titulo);
+            
+            puesto.tarifas.forEach(tarifa => {
+                const div = document.createElement('div');
+                div.className = 'tarifa-item';
+                div.innerHTML = `
+                    <span><strong>${tarifa.categoriaDeVehiculo.nombre}</strong></span>
+                    <span class="tarifa-monto">$ ${tarifa.monto.toFixed(2)}</span>
+                `;
+                listaTarifas.appendChild(div);
+            });
+        }
+
+        function emularTransito() {
+            console.log('=== INICIO emularTransito ===');
+            
+            try {
+                const puesto = obtenerPuestoSeleccionado();
+                const matricula = document.getElementById('inputMatricula').value.trim();
+                const fecha = document.getElementById('inputFecha').value;
+                if (!puesto) {
+                    alert('Por favor seleccione un puesto');
+                    return;
+                }
+                
+                if (!matricula) {
+                    alert('Por favor ingrese una matrícula');
+                    return;
+                }
+
+                if (!fecha) {
+                    alert('Por favor seleccione una fecha y hora');
+                    return;
+                }
+                
+                const params = new URLSearchParams();
+                params.append('puesto', puesto.nombre);
+                params.append('matricula', matricula);
+                params.append('fecha', fecha);
+                
+                submit("menuAdministrador/emularTransito", params.toString());
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function mostrar_resultadoEmulacion(datos) {
+            console.log("🔍 ====== INICIO mostrar_resultadoEmulacion ======");
+            console.log("📦 Datos recibidos:", datos);
+            console.log("📦 Tipo:", typeof datos);
+            console.log("📦 Keys:", datos ? Object.keys(datos) : 'null');
+            
+            const contenedor = document.getElementById('resultadoEmulacion');
+            
+            if (!contenedor) {
+                console.error("❌ No se encontró el contenedor");
+                return;
+            }
+            
+            if (!datos) {
+                console.error("❌ Datos vacíos");
+                contenedor.innerHTML = '<p class="error">No se recibieron datos del tránsito</p>';
+                return;
+            }
+            
+            // Log detallado de cada campo
+            console.log("📋 Campos individuales:");
+            console.log("  nombrePropietario:", datos.nombrePropietario, typeof datos.nombrePropietario);
+            console.log("  ciPropietario:", datos.ciPropietario, typeof datos.ciPropietario);
+            console.log("  matriculaVehiculo:", datos.matriculaVehiculo, typeof datos.matriculaVehiculo);
+            console.log("  categoria:", datos.categoria, typeof datos.categoria);
+            console.log("  nombrePuesto:", datos.nombrePuesto, typeof datos.nombrePuesto);
+            console.log("  bonificacion:", datos.bonificacion, typeof datos.bonificacion);
+            console.log("  montoCobrado:", datos.montoCobrado, typeof datos.montoCobrado);
+            console.log("  saldoDespues:", datos.saldoDespues, typeof datos.saldoDespues);
+            
+            // Extraer y validar valores
+            const nombrePropietario = datos.nombrePropietario || 'N/A';
+            const ciPropietario = datos.ciPropietario || 'N/A';
+            const matriculaVehiculo = datos.matriculaVehiculo || 'N/A';
+            const categoria = datos.categoria || 'N/A';
+            const nombrePuesto = datos.nombrePuesto || 'N/A';
+            const bonificacion = datos.bonificacion || 'Ninguna';
+            
+            // Validar números - CRÍTICO
+            let montoCobrado = 0;
+            let saldoDespues = 0;
+            
+            try {
+                if (datos.montoCobrado !== undefined && datos.montoCobrado !== null) {
+                    montoCobrado = Number(datos.montoCobrado);
+                    console.log("✅ montoCobrado convertido:", montoCobrado);
+                } else {
+                    console.warn("⚠️ montoCobrado no definido");
+                }
+                
+                if (datos.saldoDespues !== undefined && datos.saldoDespues !== null) {
+                    saldoDespues = Number(datos.saldoDespues);
+                    console.log("✅ saldoDespues convertido:", saldoDespues);
+                } else {
+                    console.warn("⚠️ saldoDespues no definido");
+                }
+            } catch (error) {
+                console.error("❌ Error al convertir números:", error);
+            }
+            
+            console.log("💰 Valores finales:");
+            console.log("  montoCobrado:", montoCobrado);
+            console.log("  saldoDespues:", saldoDespues);
+            
+            try {
+                contenedor.innerHTML = `
+                    <div class="resultado-exito">
+                        <h3>✓ Tránsito Registrado Exitosamente</h3>
+                        <div class="resultado-detalles">
+                            <div class="resultado-item">
+                                <strong>Propietario:</strong> ${nombrePropietario}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>CI:</strong> ${ciPropietario}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Matrícula:</strong> ${matriculaVehiculo}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Categoría:</strong> ${categoria}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Puesto:</strong> ${nombrePuesto}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Bonificación:</strong> ${bonificacion}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Monto Cobrado:</strong> $${montoCobrado.toFixed(2)}
+                            </div>
+                            <div class="resultado-item">
+                                <strong>Saldo Después:</strong> $${saldoDespues.toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                console.log("✅ HTML generado correctamente");
+            } catch (error) {
+                console.error("❌ Error al generar HTML:", error);
+                contenedor.innerHTML = `<p class="error">Error al mostrar resultado: ${error.message}</p>`;
+            }
+            
+            // Limpiar formulario
+            const inputMatricula = document.getElementById('inputMatricula');
+            const inputFecha = document.getElementById('inputFecha');
+            if (inputMatricula) inputMatricula.value = '';
+            if (inputFecha) inputFecha.value = '';
+            
+            // Scroll
+            try {
+                contenedor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (e) {
+                console.warn("No se pudo hacer scroll");
+            }
+            
+            console.log("✅ ====== FIN mostrar_resultadoEmulacion ======");
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("=== DOM CARGADO ===");
+            
+            // Verificar elementos
+            console.log("Verificando selects:");
+            console.log("- selectPuesto:", document.getElementById('selectPuesto'));
+            console.log("- selectBonificacion:", document.getElementById('selectBonificacion'));
+            console.log("- selectPuestoBonif:", document.getElementById('selectPuestoBonif'));
+            
+            cambiarVista('emular');
+            
+            const selectPuesto = document.getElementById('selectPuesto');
+            if (selectPuesto) {
+                selectPuesto.addEventListener('change', function() {
+                    const puestoSeleccionado = obtenerPuestoSeleccionado();
+                    if (puestoSeleccionado) {
+                        cargarTarifasPuesto(puestoSeleccionado);
+                    } else {
+                        document.getElementById('listaTarifas').innerHTML = '';
+                    }
+                });
+            }
+            
+            console.log("✅ Inicialización completada");
+        });
+        
+    </script>
+</body>
+</html>
