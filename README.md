@@ -144,4 +144,4 @@ Los datos son de prueba y se cargan en memoria al iniciar (sin persistencia en b
 
 ## Autor
 
-Podés completar esta sección con tu nombre, LinkedIn y contacto para portfolio.
+Francisco Bresciano.
